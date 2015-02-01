@@ -14,7 +14,7 @@
 
 //TYPES, DEFINES
 
-#define MAXTASKS 2 
+#define MAXTASKS 3 
 
 //define type for task callbacks. 
 typedef void (*task_callback)(); 
