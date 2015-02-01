@@ -1,6 +1,8 @@
 #include "radio.h"
+#include "scheduler.h"
  
 volatile uint8_t rxflag = 0;
+uint32_t idle_period = 0;
  
 // packets are transmitted to this address
 uint8_t station_addr[5] = { 0xAB, 0xAB, 0xAB, 0xAB, 0xAB };
@@ -10,8 +12,35 @@ uint8_t my_addr[5] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF   };
  
 radiopacket_t packet;
  
+
+void writeRoomba() {
+	// send the data
+	Radio_Transmit(&packet, RADIO_WAIT_FOR_TX);  
+  
+	// wait for the ACK reply to be transmitted back.
+	if (rxflag)
+	{
+		// remember always to read the packet out of the radio, even
+		// if you don't use the data.
+		if (Radio_Receive(&packet) != RADIO_RX_MORE_PACKETS)
+		{
+			// if there are no more packets on the radio, clear the receive flag;
+			// otherwise, we want to handle the next packet on the next loop iteration.
+			rxflag = 0;
+		}
+		if (packet.type == MESSAGE)
+		{
+			digitalWrite(13, HIGH);
+		}
+	}
+        delay(1000);  
+} 
+ 
 void setup()
 {
+  
+        Serial.begin(9600);
+        
 	pinMode(13, OUTPUT);
 	pinMode(47, OUTPUT);
  
@@ -34,32 +63,28 @@ void setup()
  
 	// The address to which the next transmission is to be sent
 	Radio_Set_Tx_Addr(station_addr);
+
+        scheduler_init();
+        
+        scheduler_start_task(0, 500, writeRoomba);
+//        scheduler_start_task(200, 500, writeRoomba);
 }
 
 void loop() {
-	// send the data
-	Radio_Transmit(&packet, RADIO_WAIT_FOR_TX);  
   
-	// wait for the ACK reply to be transmitted back.
-	if (rxflag)
-	{
-		// remember always to read the packet out of the radio, even
-		// if you don't use the data.
-		if (Radio_Receive(&packet) != RADIO_RX_MORE_PACKETS)
-		{
-			// if there are no more packets on the radio, clear the receive flag;
-			// otherwise, we want to handle the next packet on the next loop iteration.
-			rxflag = 0;
-		}
-		if (packet.type == MESSAGE)
-		{
-			digitalWrite(13, HIGH);
-		}
-	}
-        delay(1000);
+        idle_period = scheduler_dispatch(); 
+      
+        if(idle_period){
+            Serial.println(idle_period);
+             idle(idle_period); 
+        }
 }
  
 void radio_rxhandler(uint8_t pipe_number)
 {
 	rxflag = 1;
+}
+
+void idle(uint32_t period) {
+    delay(period); 
 }
