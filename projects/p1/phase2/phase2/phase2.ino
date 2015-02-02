@@ -7,32 +7,33 @@
 volatile uint8_t rxflag = 0;
 uint32_t idle_period = 0;
 
-// packets are transmitted to this address
+// Packets for commands and IR
 radiopacket_t packet;
+radiopacket_t ir_packet;
 
-//uint8_t station_addr[5] = {0xAB, 0xAB, 0xAB, 0xAB, 0xAB };
-
-
-// this is this radio's address
+// Our radio's address
 uint8_t my_addr[5] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
+// Analog pins for joystick
 int analogServoPinX = A0;
 int analogServoPinY = A1;
-int buttonPin = A2; //input to read the joystick switch
+int buttonPin = A2;
 
+// State variables for button
 int buttonState = 0; //state variable, high when the button has been pressed.
 int buttonValue = 1000;
 int buttonPressed = 0;
 
-int xvalue = 0;  //variable to store the xvalue of the joystick
-int yvalue = 0;  //variable to store the yvalue of the joystick
+int xvalue = 0;  //variable to store the x value of the joystick
+int yvalue = 0;  //variable to store the y value of the joystick
 
-int turnIntervalX = 0; //value to adjsut the servo by (PWM)
-int turnIntervalY = 0; //value to adjsut the servo by (PWM)
+int turnIntervalX = 0; // -1 (for ccw rotation), 0 (for neutral) and 1 for (cw rotation)
+int turnIntervalY = 0; // -1 (for backwards), 0 (for neutral) and 1 for (forwards motion)
 
 int roombaNumber = 0;
 int txflag = 0; // if this is 0, we do not send packets
 
+// Send a movement/rotation command to the Roomba
 void sendCommand(int16_t velocity, int16_t rotation) {
 
   if(txflag == 0) return;
@@ -51,17 +52,30 @@ void sendCommand(int16_t velocity, int16_t rotation) {
   command->arguments[2] = SET_HIGH_BYTE(rotation);
   command->arguments[3] = SET_LOW_BYTE(rotation);  
   
-//  Serial.print(command->arguments[0]);
-//  Serial.print(command->arguments[1]);
-//  Serial.print(command->arguments[1]);
-//  Serial.print(command->arguments[3]);
-//  Serial.println();
-  
   // send the data
   Radio_Transmit(&packet, RADIO_WAIT_FOR_TX);  
   txflag = 0; 
 }
 
+// Send an IR command to the Roomba
+void sendIRCommand() {
+
+  if(txflag == 0) return;
+  
+  // put some data into the packet
+  ir_packet.type = IR_COMMAND;
+  memcpy(ir_packet.payload.command.sender_address, my_addr, RADIO_ADDRESS_LENGTH);
+  
+  pf_ir_command_t* command = &(ir_packet.payload.ir_command);
+  command->ir_command = SEND_BYTE;
+  command->ir_data = 'A';
+  
+  // send the data
+  Radio_Transmit(&ir_packet, RADIO_WAIT_FOR_TX);  
+  txflag = 0; 
+}
+
+// Task for receiving packets from the Roomba
 void receivePacket() {
   // wait for the ACK reply to be transmitted back.
   if (rxflag)
@@ -77,18 +91,16 @@ void receivePacket() {
   }   
 }
 
+// State machine used to send data to the Roomba based on global variables
 void writeRoomba() {
-//  Serial.print(" turnIntervalX: ");
-//  Serial.print(turnIntervalX);
-//  Serial.print(" turnIntervalY: ");
-//  Serial.print(turnIntervalY); 
-//  Serial.print(" buttonState: ");
-//  Serial.println(buttonState);
 
+  // Send IR packet if button is pressed
   if(buttonState == 1) {
     buttonState = 0;
+    sendIRCommand();
   }
   
+  // Rotate the Roomba if the joystick is moved in the x direction
   switch(turnIntervalX) {
     case 1:
       sendCommand(0x01F4, 0xFFFF);
@@ -97,6 +109,7 @@ void writeRoomba() {
       sendCommand(0x01F4, 0);
   }  
   
+  // Move the Roomba if the joystick is moved in the y direction
   switch(turnIntervalY) {
     case -1:
       sendCommand(0x01F4, 0x8000);
@@ -110,6 +123,7 @@ void writeRoomba() {
   }
 }
 
+// Task for querying analog input from joystick
 void getInput() {
   if(txflag == 1) return;
   
@@ -165,6 +179,7 @@ void setup()
   pinMode(13, OUTPUT);
   pinMode(47, OUTPUT);
 
+  // Reset radio
   digitalWrite(47, LOW);
   delay(100);
   digitalWrite(47, HIGH);
@@ -180,6 +195,7 @@ void setup()
   // The address to which the next transmission is to be sent
   Radio_Set_Tx_Addr(ROOMBA_ADDRESSES[roombaNumber]);
 
+  // Enable scheduler
   scheduler_init();
 
   scheduler_start_task(0, 20, getInput);
@@ -204,8 +220,3 @@ void radio_rxhandler(uint8_t pipe_number)
 void idle(uint32_t period) {
   delay(period); 
 }
-
-
-
-
-
