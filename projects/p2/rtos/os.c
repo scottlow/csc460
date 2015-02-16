@@ -86,7 +86,7 @@ static void kernel_handle_request(void);
 /* context switching */
 static void exit_kernel(void) __attribute((noinline, naked));
 static void enter_kernel(void) __attribute((noinline, naked));
-extern "C" void TIMER1_COMPA_vect(void) __attribute__ ((signal, naked));
+/*extern "C"*/ void TIMER1_COMPA_vect(void) __attribute__ ((signal, naked));
 
 static int kernel_create_task();
 static void kernel_terminate_task(void);
@@ -275,7 +275,7 @@ static void kernel_handle_request(void)
 		
     default:
         /* Should never happen */
-        error_msg = ERR_RUN_8_RTOS_INTERNAL_ERROR;
+        error_msg = ERR_RUN_5_RTOS_INTERNAL_ERROR;
         OS_Abort();
         break;
     }

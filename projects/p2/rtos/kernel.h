@@ -38,6 +38,8 @@ extern "C" {
 /** LEDs for OS_Abort() */
 #define LED_GREEN_MASK    (uint8_t)(_BV(5) | _BV(6))
 
+#define WORKSPACE 10
+
 
 /* Typedefs and data structures. */
 
