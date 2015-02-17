@@ -28,7 +28,6 @@ $(PRG).elf: $(OBJ)
 # dependency:
 mainProg.o: os.o mainProg.c os.h kernel.h
 os.o: os.c os.h error_code.h kernel.h 
-mainProg.o: mainProg.c os.h kernel.h
 
 clean:
 	rm -rf *.o $(PRG).elf *.eps *.png *.pdf *.bak 

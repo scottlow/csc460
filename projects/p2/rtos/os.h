@@ -354,6 +354,8 @@ void Service_Publish( SERVICE *s, int16_t v );
   */
 uint16_t Now();  // number of milliseconds since the RTOS boots.
 
+int Task_Create(void (*f)(void), int arg, unsigned int level, unsigned int name); 
+
 #ifdef __cplusplus
 }
 #endif
