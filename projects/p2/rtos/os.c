@@ -20,14 +20,37 @@
 /* Needed for memset */
 /* #include <string.h> */
 
+/** PPP and PT defined in user application. */
+const unsigned char PPP[2] = {1, 255};
+
+/** PPP and PT defined in user application. */
+const unsigned int PT = 1;
+
+extern int r_main(); 
+
+/*
+void foo(){
+    DDRB = 1 << 7;          
+    for(;;){
+        _delay_ms(100);  
+        PORTB ^= 1 << 7; 
+        //Task_Next(); 
+    }
+}
+int r_main(){
+    Task_Create(foo, 0, PERIODIC, 1); 
+    return 0; 
+}
+*/
+
 /** @brief main function provided by user application. The first task to run. */
-extern int r_main();
+//extern int r_main();
 
 /** PPP and PT defined in user application. */
-extern const unsigned char PPP[];
+//extern const unsigned char PPP[];
 
 /** PPP and PT defined in user application. */
-extern const unsigned int PT;
+//extern const unsigned int PT;
 
 /** The task descriptor of the currently RUNNING task. */
 static task_descriptor_t* cur_task = NULL;
@@ -298,6 +321,8 @@ static void kernel_handle_request(void)
  */
 #define    SAVE_CTX_TOP()       asm volatile (\
     "push   r31             \n\t"\
+    "in     r31,0X3C	    \n\t"\
+    "push   r31             \n\t"\
     "in     r31,__SREG__    \n\t"\
     "cli                    \n\t"::); /* Disable interrupt */
 
@@ -338,7 +363,7 @@ static void kernel_handle_request(void)
     "push   r1              \n\t"\
     "push   r0              \n\t"::);
 
-/**
+/*
  * @brief Push all the registers and SREG onto the stack.
  */
 #define    SAVE_CTX()    SAVE_CTX_TOP();SAVE_CTX_BOTTOM();
@@ -380,6 +405,8 @@ static void kernel_handle_request(void)
     "pop    r30             \n\t"\
     "pop    r31             \n\t"\
 	"out    __SREG__, r31    \n\t"\
+    "pop    r31             \n\t"\
+	"out    0X3C, r31    \n\t"\
     "pop    r31             \n\t"::);
 
 
@@ -613,7 +640,7 @@ static int kernel_create_task()
     stack_bottom = &(p->stack[WORKSPACE-1]);
 
     /* The stack grows down in memory, so the stack pointer is going to end up
-     * pointing to the location 32 + 1 + 2 + 2 = 37 bytes above the bottom, to make
+     * pointing to the location 32 + 1 + 2 + 2 + 2 = 39 bytes above the bottom, to make
      * room for (from bottom to top):
      *   the address of Task_Terminate() to destroy the task if it ever returns,
      *   the address of the start of the task to "return" to the first time it runs,
@@ -621,7 +648,7 @@ static int kernel_create_task()
      *   the stored SREG, and
      *   registers 30 to 0.
      */
-    uint8_t* stack_top = stack_bottom - (32 + 1 + 2 + 2);
+    uint8_t* stack_top = stack_bottom - (32 + 1 + 2 + 2 + 3);
 
     /* Not necessary to clear the task descriptor. */
     /* memset(p,0,sizeof(task_descriptor_t)); */
@@ -630,8 +657,8 @@ static int kernel_create_task()
      * stack_top[1] is r0. */
     stack_top[2] = (uint8_t) 0; /* r1 is the "zero" register. */
     /* stack_top[31] is r30. */
-    stack_top[32] = (uint8_t) _BV(SREG_I); /* set SREG_I bit in stored SREG. */
-    /* stack_top[33] is r31. */
+    /* stack_top[32] is r31. */
+    stack_top[33] = (uint8_t) _BV(SREG_I); /* set SREG_I bit in stored SREG. */
 
     /* We are placing the address (16-bit) of the functions
      * onto the stack in reverse byte order (least significant first, followed
@@ -639,10 +666,12 @@ static int kernel_create_task()
      * (ret and reti) pop addresses off in BIG ENDIAN (most sig. first, least sig.
      * second), even though the AT90 is LITTLE ENDIAN machine.
      */
-    stack_top[34] = (uint8_t)((uint16_t)(kernel_request_create_args.f) >> 8);
-    stack_top[35] = (uint8_t)(uint16_t)(kernel_request_create_args.f);
-    stack_top[36] = (uint8_t)((uint16_t)Task_Terminate >> 8);
-    stack_top[37] = (uint8_t)(uint16_t)Task_Terminate;
+    stack_top[35] = (uint8_t)0; 
+    stack_top[36] = (uint8_t)((uint16_t)(kernel_request_create_args.f) >> 8);
+    stack_top[37] = (uint8_t)(uint16_t)(kernel_request_create_args.f);
+    stack_top[38] = (uint8_t)0;
+    stack_top[39] = (uint8_t)((uint16_t)Task_Terminate >> 8);
+    stack_top[40] = (uint8_t)(uint16_t)Task_Terminate;
 
     /*
      * Make stack pointer point to cell above stack (the top).
@@ -1075,6 +1104,13 @@ int Task_GetArg(void)
  */
 int main()
 {
+    /* test code, confirms that it works
+    DDRB = 1 << 7;          
+    for(;;){
+        _delay_ms(5000);  
+        PORTB ^= 1 << 7; 
+    }
+    */
 	OS_Init();
 	return 0;
 }
