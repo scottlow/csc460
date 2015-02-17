@@ -21,10 +21,11 @@
 /* #include <string.h> */
 
 /** PPP and PT defined in user application. */
-const unsigned char PPP[2] = {1, 255};
+//extern const unsigned char PPP[2] = {1, 255};
+extern const unsigned char PPP[];
 
 /** PPP and PT defined in user application. */
-const unsigned int PT = 1;
+extern const unsigned int PT;
 
 extern int r_main(); 
 

@@ -12,8 +12,8 @@ avr-gcc -Wall -O2 -DF_CPU=16000000UL -mmcu=atmega2560 -c -o mainProg.o mainProg.
 avr-gcc -Wall -O2 -DF_CPU=16000000UL -mmcu=atmega2560 -c -o os.o os.c
 
 echo "Linking..."
-#avr-gcc -Wall -O2 -DF_CPU=16000000UL -mmcu=atmega2560 -g -o out.elf os.o mainProg.o
-avr-gcc -Wall -O2 -DF_CPU=16000000UL -mmcu=atmega2560 -g -o out.elf os.o 
+avr-gcc -Wall -O2 -DF_CPU=16000000UL -mmcu=atmega2560 -g -o out.elf os.o mainProg.o
+#avr-gcc -Wall -O2 -DF_CPU=16000000UL -mmcu=atmega2560 -g -o out.elf os.o 
 
 echo "Making ELF..."
 #avr-gcc -Wall -Os -mmcu=atmega2560 -g -o out.elf out.o
