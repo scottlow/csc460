@@ -29,30 +29,6 @@ extern const unsigned int PT;
 
 extern int r_main(); 
 
-/*
-void foo(){
-    DDRB = 1 << 7;          
-    for(;;){
-        _delay_ms(100);  
-        PORTB ^= 1 << 7; 
-        //Task_Next(); 
-    }
-}
-int r_main(){
-    Task_Create(foo, 0, PERIODIC, 1); 
-    return 0; 
-}
-*/
-
-/** @brief main function provided by user application. The first task to run. */
-//extern int r_main();
-
-/** PPP and PT defined in user application. */
-//extern const unsigned char PPP[];
-
-/** PPP and PT defined in user application. */
-//extern const unsigned int PT;
-
 /** The task descriptor of the currently RUNNING task. */
 static task_descriptor_t* cur_task = NULL;
 
@@ -1105,13 +1081,6 @@ int Task_GetArg(void)
  */
 int main()
 {
-    /* test code, confirms that it works
-    DDRB = 1 << 7;          
-    for(;;){
-        _delay_ms(5000);  
-        PORTB ^= 1 << 7; 
-    }
-    */
 	OS_Init();
 	return 0;
 }
