@@ -654,7 +654,7 @@ static int kernel_create_task()
     stack_top[2] = (uint8_t) 0; /* r1 is the "zero" register. */
     /* stack_top[31] is r30. */
     /* stack_top[32] is r31. */
-    stack_top[33] = (uint8_t) _BV(SREG_I); /* set SREG_I bit in stored SREG. */
+    stack_top[32] = (uint8_t) _BV(SREG_I); /* set SREG_I bit in stored SREG. */
 
     /* We are placing the address (16-bit) of the functions
      * onto the stack in reverse byte order (least significant first, followed

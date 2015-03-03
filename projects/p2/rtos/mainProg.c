@@ -4,32 +4,37 @@
 #include "kernel.h"
 
 /** PPP and PT defined in user application. */
-const unsigned char PPP[2] = {1, 255};
+const unsigned char PPP[4] = {1, 200, 2, 100};
 
 /** PPP and PT defined in user application. */
-const unsigned int PT = 1;
+const unsigned int PT = 2;
 
 void foo(){
     uint16_t val = 0; 
 
-    DDRB = 1 << 7;          
     while(1){
-        _delay_ms(500);  
-        for(;;){
-            val = Now()%5; 
-            if(val == 3){
-                PORTB ^= 1 << 7; 
-                break; 
-            }
-        }
-    }
-    
-    
+        _delay_ms(20);
+        PORTB ^= 1 << 7;
+    } 
+}
+
+void bar(){
+    uint16_t val = 0;
+
+    while(1){
+        _delay_ms(200);
+        PORTB ^= 1 << 6;
+    } 
 }
 
 int r_main(){
-    Task_Create(foo, 0, PERIODIC, 1); 
+    DDRB |= 1 << 7; 
+    DDRB |= 1 << 6;             
+    PORTB = 0;
 
-    Service_Init(); 
+    Task_Create(foo, 0, RR, 1);
+    Task_Create(bar, 0, RR, 2);
+
+    //Service_Init(); 
     return 0; 
 }
