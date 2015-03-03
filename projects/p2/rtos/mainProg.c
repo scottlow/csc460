@@ -35,6 +35,6 @@ int r_main(){
     Task_Create(foo, 0, RR, 1);
     Task_Create(bar, 0, RR, 2);
 
-    //Service_Init(); 
+    Service_Init(); 
     return 0; 
 }

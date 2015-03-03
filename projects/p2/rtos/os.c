@@ -1110,6 +1110,14 @@ SERVICE *Service_Init(){
 
 }
 
+void Service_Publish( SERVICE *s, int16_t v ){
+    
+}
+
+void Service_Subscribe( SERVICE *s, int16_t *v ){
+
+}
+
 /**
  * Runtime entry point into the program; just start the RTOS.  The application layer must define r_main() for its entry point.
  */
