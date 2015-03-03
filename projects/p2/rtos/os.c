@@ -20,6 +20,12 @@
 /* Needed for memset */
 /* #include <string.h> */
 
+/*Variables for Project 2*/
+
+static uint16_t tick_count; 
+static uint16_t timer_value; 
+
+
 /** PPP and PT defined in user application. */
 //extern const unsigned char PPP[2] = {1, 255};
 extern const unsigned char PPP[];
@@ -532,6 +538,8 @@ void TIMER1_COMPA_vect(void)
      * Prepare for next tick interrupt.
      */
     OCR1A += TICK_CYCLES;
+    tick_count++; 
+    timer_value = TCNT1; 
 
     /*
      * Restore the kernel context. (The stack pointer is restored again.)
@@ -1074,6 +1082,13 @@ int Task_GetArg(void)
     SREG = sreg;
 
     return arg;
+}
+
+/*
+ * Now() - returns the number of milliseconds from OS_init() call.  
+ */
+uint16_t Now(){
+    return (tick_count*5)+((TCNT1 - timer_value)/TIMER_PRESCALER/1000); 
 }
 
 /**

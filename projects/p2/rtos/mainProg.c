@@ -10,12 +10,22 @@ const unsigned char PPP[2] = {1, 255};
 const unsigned int PT = 1;
 
 void foo(){
+    uint16_t val = 0; 
+    uint16_t i = 0; 
+
     DDRB = 1 << 7;          
-    for(;;){
-        _delay_ms(5000);  
-        PORTB ^= 1 << 7; 
-        Task_Next(); 
+    while(1){
+        _delay_ms(500);  
+        for(;;){
+            val = Now()%5; 
+            if(val == 3){
+                PORTB ^= 1 << 7; 
+                break; 
+            }
+        }
     }
+    
+    
 }
 
 int r_main(){
