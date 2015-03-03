@@ -53,6 +53,8 @@ ERR_RUN_4_ILLEGAL_ISR_KERNEL_REQUEST,
 /** RTOS Internal error in handling request. */
 ERR_RUN_5_RTOS_INTERNAL_ERROR,
 
+ERR_RUN_6_SERVICE_INIT_ERROR,
+
 };
 
 

@@ -29,5 +29,7 @@ void foo(){
 
 int r_main(){
     Task_Create(foo, 0, PERIODIC, 1); 
+
+    Service_Init(); 
     return 0; 
 }

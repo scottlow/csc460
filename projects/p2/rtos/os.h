@@ -213,6 +213,8 @@ extern "C" {
 
 #define IDLE     0  
 
+#define MAXSERVICES 5
+
 
 /*================
   *    T Y P E S
@@ -221,7 +223,7 @@ extern "C" {
 /** A service descriptor
  * \sa Service_Init().
  */
-typedef struct service SERVICE;  
+typedef struct service SERVICE; 
 
 
 /*================

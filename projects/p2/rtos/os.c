@@ -22,8 +22,19 @@
 
 /*Variables for Project 2*/
 
+typedef struct service{
+  uint16_t value; 
+  uint16_t length; 
+  queue_t tasks; 
+};
+
 static uint16_t tick_count; 
 static uint16_t timer_value; 
+
+static SERVICE services[MAXSERVICES]; 
+static uint16_t current_service = 0; 
+
+
 
 
 /** PPP and PT defined in user application. */
@@ -1078,6 +1089,25 @@ int Task_GetArg(void)
  */
 uint16_t Now(){
     return (tick_count*5)+((TCNT1 - timer_value)/(F_CPU/TIMER_PRESCALER/1000)); 
+}
+
+/*
+* 
+*/
+SERVICE *Service_Init(){
+
+    if(current_service + 1 > MAXSERVICES){
+        error_msg = ERR_RUN_6_SERVICE_INIT_ERROR;
+        OS_Abort(); 
+    }
+
+    services[current_service].value = 0;
+    services[current_service].tasks.head = NULL;
+    services[current_service].tasks.tail = NULL;
+    services[current_service].length = 0;
+
+    return &(services[current_service++]);
+
 }
 
 /**
