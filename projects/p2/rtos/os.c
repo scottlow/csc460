@@ -1088,7 +1088,7 @@ int Task_GetArg(void)
  * Now() - returns the number of milliseconds from OS_init() call.  
  */
 uint16_t Now(){
-    return (tick_count*5)+((TCNT1 - timer_value)/TIMER_PRESCALER/1000); 
+    return (tick_count*5)+((TCNT1 - timer_value)/(F_CPU/TIMER_PRESCALER/1000)); 
 }
 
 /**
