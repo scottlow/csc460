@@ -932,52 +932,41 @@ static void _delay_25ms(void)
 void OS_Abort(void)
 {
     uint8_t i, j;
-    uint8_t flashes, mask;
+    uint8_t flashes;
 
     Disable_Interrupt();
 
     /* Initialize port for output */
-    DDRD = LED_RED_MASK | LED_GREEN_MASK;
+    DDRB = ATMEL_LED_MASK;
 
-    if(error_msg < ERR_RUN_1_USER_CALLED_OS_ABORT)
-    {
-        flashes = error_msg + 1;
-        mask = LED_GREEN_MASK;
-    }
-    else
-    {
-        flashes = error_msg + 1 - ERR_RUN_1_USER_CALLED_OS_ABORT;
-        mask = LED_RED_MASK;
-    }
-
+    flashes = error_msg + 1;
 
     for(;;)
     {
-        PORTD = (uint8_t)(LED_RED_MASK | LED_GREEN_MASK);
+        PORTD = ATMEL_LED_MASK;
 
         for(i = 0; i < 100; ++i)
         {
                _delay_25ms();
         }
 
-        PORTD = (uint8_t) 0;
+        PORTB = (uint8_t) 0;
 
         for(i = 0; i < 40; ++i)
         {
                _delay_25ms();
         }
 
-
         for(j = 0; j < flashes; ++j)
         {
-            PORTD = mask;
+            PORTB = ATMEL_LED_MASK;
 
             for(i = 0; i < 10; ++i)
             {
                 _delay_25ms();
             }
 
-            PORTD = (uint8_t) 0;
+            PORTB = (uint8_t) 0;
 
             for(i = 0; i < 10; ++i)
             {

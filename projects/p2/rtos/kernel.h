@@ -38,6 +38,8 @@ extern "C" {
 /** LEDs for OS_Abort() */
 #define LED_GREEN_MASK    (uint8_t)(_BV(7) | _BV(7))
 
+#define ATMEL_LED_MASK (uint8_t)1 << 7; 
+
 #define WORKSPACE MAXSTACK
 
 
