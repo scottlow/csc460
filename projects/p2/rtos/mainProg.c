@@ -11,6 +11,7 @@ const unsigned int PT = 3;
 
 SERVICE * s;
 uint16_t test_int = 10;
+uint16_t publish_int = 16;
 
 void foo(){
     uint16_t val = 0; 
@@ -40,7 +41,22 @@ void baz(){
             _delay_ms(400);
         }
         Service_Subscribe(s, &test_int);
+        // if(test_int == 16) {
+        //     while(1){
+        //         PORTB ^= 1 << 7;
+        //         _delay_ms(400);
+        //     }
+        // }
     } 
+}
+
+void foobar(){
+    int j = 0;
+    while(1) {
+        for(j = 0; j < 10; j++)
+            _delay_ms(300);
+        Service_Publish(s, &publish_int);
+    }
 }
 
 int r_main(){
@@ -54,6 +70,7 @@ int r_main(){
     //Task_Create(foo, 0, RR, 1);
     Task_Create(bar, 0, RR, 2);
     Task_Create(baz, 0, RR, 3);
+    Task_Create(foobar, 0, RR, 4);
 
     return 0; 
 }

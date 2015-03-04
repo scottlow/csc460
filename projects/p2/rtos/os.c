@@ -265,25 +265,27 @@ static void kernel_handle_request(void)
         break;
 
     case TASK_NEXT:
-		switch(cur_task->level)
-		{
-	    case SYSTEM:
-	        enqueue(&system_queue, cur_task);
-			break;
+        if(cur_task->state == RUNNING) {
+    		switch(cur_task->level)
+    		{
+    	    case SYSTEM:
+    	        enqueue(&system_queue, cur_task);
+    			break;
 
-	    case PERIODIC:
-	        slot_task_finished = 1;
-	        break;
+    	    case PERIODIC:
+    	        slot_task_finished = 1;
+    	        break;
 
-	    case RR:
-	        if(cur_task->state == RUNNING) enqueue(&rr_queue, cur_task);
-	        break;
+    	    case RR:
+    	        enqueue(&rr_queue, cur_task);
+    	        break;
 
-	    default: /* idle_task */
-			break;
-		}
+    	    default: /* idle_task */
+    			break;
+    		}
 
-		cur_task->state = READY;
+    		cur_task->state = READY;
+        }
         break;
 
     case TASK_GET_ARG:
@@ -1111,17 +1113,61 @@ SERVICE *Service_Init(){
 }
 
 void Service_Publish( SERVICE *s, int16_t v ) {
-    
+    task_descriptor_t *task;
+
+    // Check for invalid service states
+    if(current_service == 0 || s == NULL) {
+        error_msg = ERR_RUN_7_TOO_FEW_SERVICES;
+        OS_Abort(); 
+    }
+
+    // Make sure the service isn't empty
+    if(s->length != 0) {
+        task = dequeue(&(s->tasks));
+    } else {
+        error_msg = ERR_RUN_9_SERVICE_ILLEGAL_OPERATION;
+        OS_Abort();
+    }
+
+    // Wake up all tasks blocked on the service
+    while(task != NULL) {
+        if(task->state == WAITING) {
+            if(task->level == SYSTEM) {
+                // If we have a system task, wake it up and enqueue it onto the system_queue
+                task->state = READY;
+                *(task->value) = v;
+                enqueue(&system_queue, task);
+            } else if(task->level == RR) {                
+                // If we have a system task, wake it up and enqueue it onto the rr_queue
+                task->state = READY;
+                *(task->value) = v;
+                enqueue(&rr_queue, task);
+            }
+        }else if(task->state == READY){
+            error_msg = ERR_RUN_9_SERVICE_ILLEGAL_OPERATION;
+            OS_Abort();
+        }else if(task->state == DEAD){
+        }else if(task->state == RUNNING){
+        } else {
+        }
+        // Dequeue next task
+        task = dequeue(&(s->tasks));
+    }
+
+    Task_Next();
 }
 
 void Service_Subscribe( SERVICE *s, int16_t *v ) {
     if(current_service == 0 || s == NULL) {
         error_msg = ERR_RUN_7_TOO_FEW_SERVICES;
         OS_Abort();        
+    } else if (cur_task->level == PERIODIC) {
+        error_msg = ERR_RUN_8_SERVICE_ILLEGAL_LEVEL;
+        OS_Abort();
     }
 
     if(s->tasks.head == NULL) {
-        // Add to head
+        // Add to head of queue
         cur_task->state = WAITING;
         cur_task->value = v;
         cur_task->next = NULL;
@@ -1129,6 +1175,7 @@ void Service_Subscribe( SERVICE *s, int16_t *v ) {
         s->tasks.tail = cur_task;
         s->length ++;
     } else {
+        // Add to queue normally
         cur_task->state = WAITING;
         cur_task->value = v;
         cur_task->next = NULL;        
