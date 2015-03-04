@@ -111,6 +111,8 @@ struct td_struct
     uint8_t                         level;
     /** A link to the next task descriptor in the queue holding this task. */
     task_descriptor_t*              next;
+    /** Value to be written to when Service_Publish() is called */
+    int16_t*                         value;
 };
 
 

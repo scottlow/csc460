@@ -276,7 +276,7 @@ static void kernel_handle_request(void)
 	        break;
 
 	    case RR:
-	        enqueue(&rr_queue, cur_task);
+	        if(cur_task->state == RUNNING) enqueue(&rr_queue, cur_task);
 	        break;
 
 	    default: /* idle_task */
@@ -1110,12 +1110,34 @@ SERVICE *Service_Init(){
 
 }
 
-void Service_Publish( SERVICE *s, int16_t v ){
+void Service_Publish( SERVICE *s, int16_t v ) {
     
 }
 
-void Service_Subscribe( SERVICE *s, int16_t *v ){
+void Service_Subscribe( SERVICE *s, int16_t *v ) {
+    if(current_service == 0 || s == NULL) {
+        error_msg = ERR_RUN_7_TOO_FEW_SERVICES;
+        OS_Abort();        
+    }
 
+    if(s->tasks.head == NULL) {
+        // Add to head
+        cur_task->state = WAITING;
+        cur_task->value = v;
+        cur_task->next = NULL;
+        s->tasks.head = cur_task;
+        s->tasks.tail = cur_task;
+        s->length ++;
+    } else {
+        cur_task->state = WAITING;
+        cur_task->value = v;
+        cur_task->next = NULL;        
+        s->tasks.tail->next = cur_task;
+        s->tasks.tail = cur_task;
+        s->length ++;
+    }
+
+    Task_Next();
 }
 
 /**
