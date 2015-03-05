@@ -122,7 +122,7 @@ struct td_struct
     /** New variables required for PERIODIC tasks. */
     uint16_t                        period;
     uint16_t                        wcet;
-    uint16_t                        start;
+    uint16_t                        time_remaining;
 
 };
 

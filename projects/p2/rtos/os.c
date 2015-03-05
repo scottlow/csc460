@@ -691,7 +691,7 @@ static int kernel_create_task()
     p->name = kernel_request_create_args.name;
     p->period = kernel_request_create_args.period;
     p->wcet = kernel_request_create_args.wcet;
-    p->start = kernel_request_create_args.start;
+    p->time_remaining = kernel_request_create_args.start;
 
 	switch(kernel_request_create_args.level)
 	{
@@ -790,6 +790,7 @@ static task_descriptor_t* dequeue(queue_t* queue_ptr)
  */
 static void kernel_update_ticker(void)
 {
+    int i;
     /* PORTD ^= LED_D5_RED; */
 
     if(PT > 0)
@@ -801,29 +802,17 @@ static void kernel_update_ticker(void)
         {
             /* If Periodic task still running then error */
             //Notes this would only be true if the cur_task has not yet yielded. 
-            if(cur_task != NULL && cur_task->level == PERIODIC && slot_task_finished == 0)
+            if(cur_task != NULL && cur_task->level == PERIODIC)
             {
                 /* error handling */
                 error_msg = ERR_RUN_3_PERIODIC_TOOK_TOO_LONG;
                 OS_Abort();
             }
+        }
 
-            slot_name_index += 2;
-            if(slot_name_index >= 2 * PT)
-            {
-                slot_name_index = 0;
-            }
-
-            ticks_remaining = PPP[slot_name_index + 1];
-
-            if(PPP[slot_name_index] == IDLE || name_to_task_ptr[PPP[slot_name_index]] == NULL)
-            {
-                slot_task_finished = 1;
-            }
-            else
-            {
-                slot_task_finished = 0;
-            }
+        // Decrement all ticks
+        for(i = 0; i < current_pt; i++) {
+            periodic_tasks[current_pt].time_remaining --;
         }
     }
 }
