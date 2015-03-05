@@ -1188,6 +1188,79 @@ void Service_Subscribe( SERVICE *s, int16_t *v ) {
 }
 
 /**
+   * \param f a parameterless function to be created as a process instance
+   * \param arg an integer argument to be assigned to this process instanace
+   * \param period its execution period in TICKs
+   * \param wcet its worst-case execution time in TICKs, must be less than "period"
+   * \param start its start time in TICKs
+   * \return 0 if not successful; otherwise non-zero.
+   * \sa Task_GetArg()
+   *
+   *  A new process is created to execute the parameterless
+   *  function \a f with an initial parameter \a arg, which is retrieved
+   *  by a call to Task_GetArg().  If a new process cannot be
+   *  created, 0 is returned; otherwise, it returns non-zero.
+   *
+   * \sa \ref policy
+   */
+int8_t Task_Create_Periodic(void(*f)(void), int16_t arg, uint16_t period, uint16_t wcet, uint16_t start){
+    return 1; 
+}
+
+ /**
+   * \param f  a parameterless function to be created as a process instance
+   * \param arg an integer argument to be assigned to this process instanace
+   * \return 0 if not successful; otherwise non-zero.
+   * \sa Task_GetArg()
+   *
+   *  A new process is created to execute the parameterless
+   *  function \a f with an initial parameter \a arg, which is retrieved
+   *  by a call to Task_GetArg().  If a new process cannot be
+   *  created, 0 is returned; otherwise, it returns non-zero.
+   *
+   * \sa \ref policy
+   */
+int8_t Task_Create_System(void (*f)(void), int16_t arg){
+    int retval;
+    uint8_t sreg;
+
+    sreg = SREG;
+    Disable_Interrupt();
+
+    kernel_request_create_args.f = (voidfuncvoid_ptr)f;
+    kernel_request_create_args.arg = arg;
+    kernel_request_create_args.level = SYSTEM;
+
+    kernel_request = TASK_CREATE;
+    enter_kernel();
+
+    retval = kernel_request_retval;
+    SREG = sreg;
+
+    return retval;    
+}
+
+int8_t Task_Create_RR(void (*f)(void), int16_t arg){
+    int retval;
+    uint8_t sreg;
+
+    sreg = SREG;
+    Disable_Interrupt();
+
+    kernel_request_create_args.f = (voidfuncvoid_ptr)f;
+    kernel_request_create_args.arg = arg;
+    kernel_request_create_args.level = RR;
+
+    kernel_request = TASK_CREATE;
+    enter_kernel();
+
+    retval = kernel_request_retval;
+    SREG = sreg;
+
+    return retval;
+}
+
+/**
  * Runtime entry point into the program; just start the RTOS.  The application layer must define r_main() for its entry point.
  */
 int main()
