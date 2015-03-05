@@ -181,19 +181,32 @@ static void kernel_dispatch(void)
         {
             cur_task = dequeue(&system_queue);
         }
-        else if(!slot_task_finished && PT > 0 && name_to_task_ptr[PPP[slot_name_index]] != NULL)
+        else 
         {
-            /* Keep running the current PERIODIC task. */
-            cur_task = name_to_task_ptr[PPP[slot_name_index]];
-        }
-        else if(rr_queue.head != NULL)
-        {
-            cur_task = dequeue(&rr_queue);
-        }
-        else
-        {
-            /* No task available, so idle. */
-            cur_task = idle_task;
+            int i;
+            task_descriptor_t *t;
+            for(i = 0; i < current_pt; i++) {
+                if(periodic_tasks[i]->time_remaining == 0) {
+                    t = periodic_tasks[i];
+                    break;
+                }
+            }
+            if(t != NULL) {                
+                cur_task = t;
+                cur_task->time_remaining += cur_task->period;
+                if(ticks_remaining == 0) {
+                    ticks_remaining = cur_task->wcet;
+                }                
+            } 
+            else if(rr_queue.head != NULL)
+            {
+                cur_task = dequeue(&rr_queue);
+            }
+            else
+            {
+                /* No task available, so idle. */
+                cur_task = idle_task;
+            }
         }
 
         cur_task->state = RUNNING;
@@ -274,7 +287,7 @@ static void kernel_handle_request(void)
     			break;
 
     	    case PERIODIC:
-    	        slot_task_finished = 1;
+    	        ticks_remaining = 0;
     	        break;
 
     	    case RR:
@@ -691,7 +704,7 @@ static int kernel_create_task()
     p->name = kernel_request_create_args.name;
     p->period = kernel_request_create_args.period;
     p->wcet = kernel_request_create_args.wcet;
-    p->time_remaining = kernel_request_create_args.start;
+    p->time_remaining = kernel_request_create_args.start; //amount of time_remaining during execution
 
 	switch(kernel_request_create_args.level)
 	{
@@ -793,7 +806,7 @@ static void kernel_update_ticker(void)
     int i;
     /* PORTD ^= LED_D5_RED; */
 
-    if(PT > 0)
+    if(current_pt > 0)
     {
         ticks_remaining--;
 
@@ -812,7 +825,7 @@ static void kernel_update_ticker(void)
 
         // Decrement all ticks
         for(i = 0; i < current_pt; i++) {
-            periodic_tasks[current_pt].time_remaining --;
+            periodic_tasks[i]->time_remaining --;
         }
     }
 }
@@ -876,7 +889,7 @@ void OS_Init()
     kernel_slow_clock();
 #endif
 
-    check_PPP_names();
+    //check_PPP_names();
 
     /*
      * Initialize dead pool to contain all but last task descriptor.

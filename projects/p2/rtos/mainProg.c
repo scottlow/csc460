@@ -16,10 +16,11 @@ uint16_t publish_int = 16;
 void foo(){
     uint16_t val = 0; 
 
-    while(1){
-        _delay_ms(20);
-        PORTB ^= 1 << 5;
-    } 
+     for(;;){
+        _delay_ms(1);
+        PORTB ^= 1 << 6;
+        Task_Next();
+    }
 }
 
 void bar(){
@@ -37,16 +38,10 @@ void baz(){
 
     while(1){
         for(i = 0; i < 4; i++){
-            PORTB ^= 1 << 7;
+            PORTB ^= 1 << 5;
             _delay_ms(400);
         }
         Service_Subscribe(s, &test_int);
-        // if(test_int == 16) {
-        //     while(1){
-        //         PORTB ^= 1 << 7;
-        //         _delay_ms(400);
-        //     }
-        // }
     } 
 }
 
@@ -72,7 +67,7 @@ int r_main(){
     //Task_Create_RR(baz);
     //Task_Create_RR(foobar);
 
-    Task_Create_Periodic(foo, 0, 200, 100, 0);
+    Task_Create_Periodic(foo, 1, 20, 2, 1000);
 
     return 0; 
 }
