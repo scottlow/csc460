@@ -68,9 +68,11 @@ int r_main(){
     s = Service_Init();
 
     //Task_Create(foo, 0, RR, 1);
-    Task_Create(bar, 0, RR, 2);
-    Task_Create(baz, 0, RR, 3);
-    Task_Create(foobar, 0, RR, 4);
+    //Task_Create_RR(bar);
+    //Task_Create_RR(baz);
+    //Task_Create_RR(foobar);
+
+    Task_Create_Periodic(foo, 0, 200, 100, 0);
 
     return 0; 
 }

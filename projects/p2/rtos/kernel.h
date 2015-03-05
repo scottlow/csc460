@@ -118,6 +118,12 @@ struct td_struct
     task_descriptor_t*              next;
     /** Value to be written to when Service_Publish() is called */
     int16_t*                         value;
+
+    /** New variables required for PERIODIC tasks. */
+    uint16_t                        period;
+    uint16_t                        wcet;
+    uint16_t                        start;
+
 };
 
 

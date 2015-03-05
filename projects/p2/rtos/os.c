@@ -34,7 +34,8 @@ static uint16_t timer_value;
 static SERVICE services[MAXSERVICES]; 
 static uint16_t current_service = 0; 
 
-
+static task_descriptor_t* periodic_tasks[MAXPROCESS]; 
+static uint16_t current_pt = 0; 
 
 
 /** PPP and PT defined in user application. */
@@ -607,29 +608,29 @@ static int kernel_create_task()
     }
 
     // Not sure how many of these errors we will need to keep if we're pulling out PPP
-    if(kernel_request_create_args.level == PERIODIC &&
-        (kernel_request_create_args.name == IDLE ||
-         kernel_request_create_args.name > MAXNAME))
-    {
-        /* PERIODIC name is out of range [1 .. MAXNAME] */
-        error_msg = ERR_2_CREATE_NAME_OUT_OF_RANGE;
-        OS_Abort();
-    }
+    // if(kernel_request_create_args.level == PERIODIC &&
+    //     (kernel_request_create_args.name == IDLE ||
+    //      kernel_request_create_args.name > MAXNAME))
+    // {
+    //     /* PERIODIC name is out of range [1 .. MAXNAME] */
+    //     error_msg = ERR_2_CREATE_NAME_OUT_OF_RANGE;
+    //     OS_Abort();
+    // }
 
-    if(kernel_request_create_args.level == PERIODIC &&
-        name_in_PPP[kernel_request_create_args.name] == 0)
-    {
-        error_msg = ERR_5_NAME_NOT_IN_PPP;
-        OS_Abort();
-    }
+    // if(kernel_request_create_args.level == PERIODIC &&
+    //     name_in_PPP[kernel_request_create_args.name] == 0)
+    // {
+    //     error_msg = ERR_5_NAME_NOT_IN_PPP;
+    //     OS_Abort();
+    // }
 
-    if(kernel_request_create_args.level == PERIODIC &&
-    name_to_task_ptr[kernel_request_create_args.name] != NULL)
-    {
-        /* PERIODIC name already used */
-        error_msg = ERR_4_PERIODIC_NAME_IN_USE;
-        OS_Abort();
-    }
+    // if(kernel_request_create_args.level == PERIODIC &&
+    // name_to_task_ptr[kernel_request_create_args.name] != NULL)
+    // {
+    //     /* PERIODIC name already used */
+    //     error_msg = ERR_4_PERIODIC_NAME_IN_USE;
+    //     OS_Abort();
+    // }
 
 	/* idling "task" goes in last descriptor. */
 	if(kernel_request_create_args.level == NULL)
@@ -688,12 +689,15 @@ static int kernel_create_task()
     p->arg = kernel_request_create_args.arg;
     p->level = kernel_request_create_args.level;
     p->name = kernel_request_create_args.name;
+    p->period = kernel_request_create_args.period;
+    p->wcet = kernel_request_create_args.wcet;
+    p->start = kernel_request_create_args.start;
 
 	switch(kernel_request_create_args.level)
 	{
     	case PERIODIC:
     		/* Put this newly created PPP task into the PPP lookup array */
-            name_to_task_ptr[kernel_request_create_args.name] = p;
+            periodic_tasks[current_pt++] = p;
     		break;
 
         case SYSTEM:
