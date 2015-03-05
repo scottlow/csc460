@@ -691,24 +691,24 @@ static int kernel_create_task()
 
 	switch(kernel_request_create_args.level)
 	{
-	case PERIODIC:
-		/* Put this newly created PPP task into the PPP lookup array */
-        name_to_task_ptr[kernel_request_create_args.name] = p;
-		break;
+    	case PERIODIC:
+    		/* Put this newly created PPP task into the PPP lookup array */
+            name_to_task_ptr[kernel_request_create_args.name] = p;
+    		break;
 
-    case SYSTEM:
-    	/* Put SYSTEM and Round Robin tasks on a queue. */
-        enqueue(&system_queue, p);
-		break;
+        case SYSTEM:
+        	/* Put SYSTEM and Round Robin tasks on a queue. */
+            enqueue(&system_queue, p);
+    		break;
 
-    case RR:
-		/* Put SYSTEM and Round Robin tasks on a queue. */
-        enqueue(&rr_queue, p);
-		break;
+        case RR:
+    		/* Put SYSTEM and Round Robin tasks on a queue. */
+            enqueue(&rr_queue, p);
+    		break;
 
-	default:
-		/* idle task does not go in a queue */
-		break;
+    	default:
+    		/* idle task does not go in a queue */
+    		break;
 	}
 
 
@@ -790,11 +790,13 @@ static void kernel_update_ticker(void)
 
     if(PT > 0)
     {
-        --ticks_remaining;
+        ticks_remaining--;
 
+        //if the task no longer has any ticks left. 
         if(ticks_remaining == 0)
         {
             /* If Periodic task still running then error */
+            //Notes this would only be true if the cur_task has not yet yielded. 
             if(cur_task != NULL && cur_task->level == PERIODIC && slot_task_finished == 0)
             {
                 /* error handling */
