@@ -600,6 +600,13 @@ static int kernel_create_task()
         return 0;
     }
 
+    // Check to make sure that wcet is less than period for PERIODIC tasks
+    if(kernel_request_create_args.level == PERIODIC && kernel_request_create_args.wcet >= kernel_request_create_args.period) {
+        error_msg = ERR_7_PERIODIC_WCET_TOO_LARGE;
+        OS_Abort();
+    }
+
+    // Not sure how many of these errors we will need to keep if we're pulling out PPP
     if(kernel_request_create_args.level == PERIODIC &&
         (kernel_request_create_args.name == IDLE ||
          kernel_request_create_args.name > MAXNAME))
@@ -1204,7 +1211,26 @@ void Service_Subscribe( SERVICE *s, int16_t *v ) {
    * \sa \ref policy
    */
 int8_t Task_Create_Periodic(void(*f)(void), int16_t arg, uint16_t period, uint16_t wcet, uint16_t start){
-    return 1; 
+    int retval;
+    uint8_t sreg;
+
+    sreg = SREG;
+    Disable_Interrupt();
+
+    kernel_request_create_args.f = (voidfuncvoid_ptr)f;
+    kernel_request_create_args.arg = arg;
+    kernel_request_create_args.level = PERIODIC;
+    kernel_request_create_args.period = period;
+    kernel_request_create_args.wcet = wcet;
+    kernel_request_create_args.start = start;
+
+    kernel_request = TASK_CREATE;
+    enter_kernel();
+
+    retval = kernel_request_retval;
+    SREG = sreg;
+
+    return retval;
 }
 
  /**

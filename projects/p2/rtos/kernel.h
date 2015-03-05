@@ -87,6 +87,11 @@ typedef struct
     uint8_t level;
     /** If the new task is PERIODIC, this is its name in the PPP array. */
     uint8_t name;
+
+    /** New variables required for PERIODIC tasks. */
+    uint16_t                        period;
+    uint16_t                        wcet;
+    uint16_t                        start;
 }
 create_args_t;
 

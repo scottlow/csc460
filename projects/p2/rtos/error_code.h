@@ -35,6 +35,8 @@ ERR_5_NAME_NOT_IN_PPP,
 /** Time interval 0 in PPP array */
 ERR_6_TIME_INTERVAL_IN_PPP_0,
 
+ERR_7_PERIODIC_WCET_TOO_LARGE,
+
 
 /** RED ERRORS -- Run time errors. */
 
