@@ -18,15 +18,17 @@ void foo(){
 
      for(;;){
         _delay_ms(1);
-        PORTB ^= 1 << 6;
+        PORTB ^= 1 << 7;
+        Service_Publish(s, &publish_int);
+        PORTB ^= 1 << 7;
         Task_Next();
     }
 }
 
 void bar(){
     uint16_t val = 0;
-
     while(1){
+        Service_Subscribe(s, &test_int);
         _delay_ms(200);
         PORTB ^= 1 << 6;
     } 
@@ -67,7 +69,9 @@ int r_main(){
     //Task_Create_RR(baz);
     //Task_Create_RR(foobar);
 
-    Task_Create_Periodic(foo, 1, 20, 2, 1000);
+    Task_Create_System(bar, 2); 
+    Task_Create_Periodic(foo, 1, 3000, 100, 1000);
+
 
     return 0; 
 }

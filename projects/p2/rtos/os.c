@@ -108,6 +108,7 @@ static void enter_kernel(void) __attribute((noinline, naked));
 
 static int kernel_create_task();
 static void kernel_terminate_task(void);
+static void kernel_task_interrupt(); 
 /* queues */
 
 static void enqueue(queue_t* queue_ptr, task_descriptor_t* task_to_add);
@@ -213,6 +214,15 @@ static void kernel_dispatch(void)
     }
 }
 
+static void kernel_task_interrupt(){
+    uint8_t sreg;
+    sreg = SREG;
+    Disable_Interrupt();
+    kernel_request = TASK_INTERRUPT;
+    enter_kernel();
+    SREG = sreg;
+}
+
 
 /**
  * @fn kernel_handle_request
@@ -305,7 +315,14 @@ static void kernel_handle_request(void)
     case TASK_GET_ARG:
         /* Should not happen. Handled in task itself. */
         break;
-		
+
+    case TASK_INTERRUPT:
+        if(cur_task->level != SYSTEM) {
+            cur_task->state = READY;
+            ticks_remaining = 0; 
+        }
+        break; 
+	
     default:
         /* Should never happen */
         error_msg = ERR_RUN_5_RTOS_INTERNAL_ERROR;
@@ -714,7 +731,7 @@ static int kernel_create_task()
     		break;
 
         case SYSTEM:
-        	/* Put SYSTEM and Round Robin tasks on a queue. */
+        	/* Put SYSTEM and Round Robin tasks on a queue. */       
             enqueue(&system_queue, p);
     		break;
 
@@ -1130,6 +1147,8 @@ SERVICE *Service_Init(){
 void Service_Publish( SERVICE *s, int16_t v ) {
     task_descriptor_t *task;
 
+    int interrupt = 0; 
+
     // Check for invalid service states
     if(current_service == 0 || s == NULL) {
         error_msg = ERR_RUN_7_TOO_FEW_SERVICES;
@@ -1151,6 +1170,11 @@ void Service_Publish( SERVICE *s, int16_t v ) {
                 // If we have a system task, wake it up and enqueue it onto the system_queue
                 task->state = READY;
                 *(task->value) = v;
+
+                if(cur_task->level != SYSTEM){
+                    interrupt = 1; 
+                }
+
                 enqueue(&system_queue, task);
             } else if(task->level == RR) {                
                 // If we have a system task, wake it up and enqueue it onto the rr_queue
@@ -1158,18 +1182,14 @@ void Service_Publish( SERVICE *s, int16_t v ) {
                 *(task->value) = v;
                 enqueue(&rr_queue, task);
             }
-        }else if(task->state == READY){
-            error_msg = ERR_RUN_9_SERVICE_ILLEGAL_OPERATION;
-            OS_Abort();
-        }else if(task->state == DEAD){
-        }else if(task->state == RUNNING){
-        } else {
         }
         // Dequeue next task
         task = dequeue(&(s->tasks));
     }
 
-    Task_Next();
+    if(interrupt){
+        kernel_task_interrupt(); 
+    }
 }
 
 void Service_Subscribe( SERVICE *s, int16_t *v ) {
