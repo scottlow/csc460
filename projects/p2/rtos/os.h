@@ -358,6 +358,19 @@ uint16_t Now();  // number of milliseconds since the RTOS boots.
 
 int Task_Create(void (*f)(void), int arg, unsigned int level, unsigned int name); 
 
+
+/**
+ * Uses pins 9, 8, 7, 6 (arduino) to express a binary number. 
+ *
+ * \param val is the value (between 0 and 15) to be expressed. 
+ */
+void set_output(uint8_t val); 
+
+/**
+ * Sets up the output on the Arduino pins 9,8,7,6 to be output pins.
+ */
+void setup_output(); 
+
 #ifdef __cplusplus
 }
 #endif

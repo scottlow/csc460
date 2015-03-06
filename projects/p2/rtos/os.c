@@ -1314,6 +1314,35 @@ int8_t Task_Create_RR(void (*f)(void), int16_t arg){
     return retval;
 }
 
+void setup_output(){
+    DDRH = 0; 
+    DDRH |= 1 << 6; 
+    DDRH |= 1 << 5; 
+    DDRH |= 1 << 4; 
+    DDRH |= 1 << 3; 
+}
+
+void set_output(uint8_t val){
+    PORTH = 0x00;   //turn off pin 8 and 9 on the arduino
+
+    if((val & 1) == 1){
+        PORTH |= 1 << 6; 
+    }
+    val = val >> 1; 
+    if((val & 1) == 1){
+        PORTH |= 1 << 5; 
+    }
+
+    val = val >> 1; 
+    if((val & 1) == 1){
+        PORTH |= 1 << 4; 
+    }
+    val = val >> 1; 
+    if((val & 1) == 1){
+        PORTH |= 1 << 3; 
+    }
+}
+
 /**
  * Runtime entry point into the program; just start the RTOS.  The application layer must define r_main() for its entry point.
  */

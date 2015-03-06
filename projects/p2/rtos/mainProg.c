@@ -28,9 +28,9 @@ void foo(){
 void bar(){
     uint16_t val = 0;
     while(1){
-        Service_Subscribe(s, &test_int);
-        _delay_ms(200);
-        PORTB ^= 1 << 6;
+        //Service_Subscribe(s, &test_int);
+        PORTB ^= 1 << 7;
+        Task_Next(); 
     } 
 }
 
@@ -56,10 +56,21 @@ void foobar(){
     }
 }
 
+void daz(){
+    uint8_t i = 0; 
+    for(;;){
+        for(i = 0; i < 16; i++){
+            set_output(i); 
+            Task_Next(); 
+        }
+    }
+}
+
 int r_main(){
     DDRB |= 1 << 7; 
     DDRB |= 1 << 6;             
     DDRB |= 1 << 5; 
+    setup_output(); 
     PORTB = 0;
     
     s = Service_Init();
@@ -69,8 +80,10 @@ int r_main(){
     //Task_Create_RR(baz);
     //Task_Create_RR(foobar);
 
-    Task_Create_System(bar, 2); 
-    Task_Create_Periodic(foo, 1, 3000, 100, 1000);
+    //Task_Create_System(bar, 2); 
+    //Task_Create_Periodic(foo, 1, 3000, 100, 1000);
+    Task_Create_Periodic(bar, 1, 25, 5, 10);
+    Task_Create_Periodic(daz, 2, 100, 5, 0);
 
 
     return 0; 
