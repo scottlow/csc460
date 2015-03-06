@@ -16,6 +16,7 @@
 #include "os.h"
 #include "kernel.h"
 #include "error_code.h"
+#include "usart.h"
 
 /* Needed for memset */
 /* #include <string.h> */
@@ -36,6 +37,9 @@ static uint16_t current_service = 0;
 
 static task_descriptor_t* periodic_tasks[MAXPROCESS]; 
 static uint16_t current_pt = 0; 
+
+static char trace[256]; 
+static uint16_t trace_counter = 0; 
 
 
 /** PPP and PT defined in user application. */
@@ -118,6 +122,8 @@ static void kernel_update_ticker(void);
 static void check_PPP_names(void);
 static void idle (void);
 static void _delay_25ms(void);
+
+static void trace_add_point(uint8_t);  
 
 /*
  * FUNCTIONS
@@ -211,6 +217,8 @@ static void kernel_dispatch(void)
         }
 
         cur_task->state = RUNNING;
+        
+        trace_add_point(cur_task->arg);  
     }
 }
 
@@ -926,6 +934,7 @@ void OS_Init()
 	/* Create idle "task" */
     kernel_request_create_args.f = (voidfuncvoid_ptr)idle;
     kernel_request_create_args.level = NULL;
+    kernel_request_create_args.arg = 47;
     kernel_create_task();
 
     /* Create "main" task as SYSTEM level. */
@@ -985,6 +994,11 @@ void OS_Abort(void)
     DDRB = ATMEL_LED_MASK;
 
     flashes = error_msg + 1;
+
+    //char test_arr[] = {'a', 'b', 'c'}; 
+
+    usart_init(9600); 
+    usart_send_bytes(trace, trace_counter); 
 
     for(;;)
     {
@@ -1340,6 +1354,12 @@ void set_output(uint8_t val){
     val = val >> 1; 
     if((val & 1) == 1){
         PORTH |= 1 << 3; 
+    }
+}
+
+static void trace_add_point(uint8_t n){
+    if(trace_counter <= 255){
+        trace[trace_counter++] = (char)(n+48); 
     }
 }
 

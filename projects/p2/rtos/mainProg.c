@@ -66,6 +66,10 @@ void daz(){
     }
 }
 
+void killMe(){
+    OS_Abort(); 
+}
+
 int r_main(){
     DDRB |= 1 << 7; 
     DDRB |= 1 << 6;             
@@ -84,7 +88,6 @@ int r_main(){
     //Task_Create_Periodic(foo, 1, 3000, 100, 1000);
     Task_Create_Periodic(bar, 1, 25, 5, 10);
     Task_Create_Periodic(daz, 2, 100, 5, 0);
-
-
+    Task_Create_Periodic(killMe, 3, 1000, 5, 1000); 
     return 0; 
 }
