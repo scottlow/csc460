@@ -190,9 +190,13 @@ static void kernel_dispatch(void)
         else 
         {
             int i;
-            task_descriptor_t *t;
+            task_descriptor_t *t = NULL;
             for(i = 0; i < current_pt; i++) {
                 if(periodic_tasks[i]->time_remaining == 0) {
+                    if(t != NULL) {
+                        error_msg = ERR_RUN_10_PERIODIC_TASK_CONFLICT;
+                        OS_Abort();
+                    }
                     t = periodic_tasks[i];
                     break;
                 }
