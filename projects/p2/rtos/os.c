@@ -25,7 +25,6 @@
 
 typedef struct service{
   uint16_t value; 
-  uint16_t length; 
   queue_t tasks; 
 };
 
@@ -1152,7 +1151,6 @@ SERVICE *Service_Init(){
     services[current_service].value = 0;
     services[current_service].tasks.head = NULL;
     services[current_service].tasks.tail = NULL;
-    services[current_service].length = 0;
 
     return &(services[current_service++]);
 
@@ -1170,7 +1168,7 @@ void Service_Publish( SERVICE *s, int16_t v ) {
     }
 
     // Make sure the service isn't empty
-    if(s->length != 0) {
+    if(s->head != NULL) {
         task = dequeue(&(s->tasks));
     } else {
         error_msg = ERR_RUN_9_SERVICE_ILLEGAL_OPERATION;
@@ -1222,7 +1220,6 @@ void Service_Subscribe( SERVICE *s, int16_t *v ) {
         cur_task->next = NULL;
         s->tasks.head = cur_task;
         s->tasks.tail = cur_task;
-        s->length ++;
     } else {
         // Add to queue normally
         cur_task->state = WAITING;
@@ -1230,7 +1227,6 @@ void Service_Subscribe( SERVICE *s, int16_t *v ) {
         cur_task->next = NULL;        
         s->tasks.tail->next = cur_task;
         s->tasks.tail = cur_task;
-        s->length ++;
     }
 
     Task_Next();
