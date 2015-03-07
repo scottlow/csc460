@@ -642,32 +642,10 @@ static int kernel_create_task()
     if(kernel_request_create_args.level == PERIODIC && kernel_request_create_args.wcet >= kernel_request_create_args.period) {
         error_msg = ERR_7_PERIODIC_WCET_TOO_LARGE;
         OS_Abort();
+    } else if(current_pt + 1 > MAXPROCESS) {
+        error_msg = ERR_8_TOO_MANY_PERIODIC_TASKS;
+        OS_Abort();
     }
-
-    // Not sure how many of these errors we will need to keep if we're pulling out PPP
-    // if(kernel_request_create_args.level == PERIODIC &&
-    //     (kernel_request_create_args.name == IDLE ||
-    //      kernel_request_create_args.name > MAXNAME))
-    // {
-    //     /* PERIODIC name is out of range [1 .. MAXNAME] */
-    //     error_msg = ERR_2_CREATE_NAME_OUT_OF_RANGE;
-    //     OS_Abort();
-    // }
-
-    // if(kernel_request_create_args.level == PERIODIC &&
-    //     name_in_PPP[kernel_request_create_args.name] == 0)
-    // {
-    //     error_msg = ERR_5_NAME_NOT_IN_PPP;
-    //     OS_Abort();
-    // }
-
-    // if(kernel_request_create_args.level == PERIODIC &&
-    // name_to_task_ptr[kernel_request_create_args.name] != NULL)
-    // {
-    //     /* PERIODIC name already used */
-    //     error_msg = ERR_4_PERIODIC_NAME_IN_USE;
-    //     OS_Abort();
-    // }
 
 	/* idling "task" goes in last descriptor. */
 	if(kernel_request_create_args.level == NULL)
