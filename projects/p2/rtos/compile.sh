@@ -8,6 +8,8 @@ rm -f *.hex
 
 echo "Compiling..."
 
+avr-gcc -Wall -O2 -DF_CPU=16000000UL -mmcu=atmega2560 -c -o tests.o tests.c
+
 avr-gcc -Wall -O2 -DF_CPU=16000000UL -mmcu=atmega2560 -c -o usart.o usart.c
 
 avr-gcc -Wall -O2 -DF_CPU=16000000UL -mmcu=atmega2560 -c -o mainProg.o mainProg.c
