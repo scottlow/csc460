@@ -9,7 +9,7 @@
 
 int bitArray[10] = {1,0,0,1,0,0,0,0,1,0}; //bit array to be sent
 int bitIndex = 0; //next value to be sent
-int buttonState = 0; //state variable, high when the button has been pressed. 
+in/ buttonState = 0; //state variable, high when the button has been pressed. 
 
 int buttonPin = A2; //input to read the joystick switch
 int buttonValue = 1000; 

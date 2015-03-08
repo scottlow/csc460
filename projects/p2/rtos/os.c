@@ -25,6 +25,7 @@
 
 struct service{
   uint16_t value; 
+  uint16_t length; 
   queue_t tasks; 
 };
 
@@ -37,7 +38,7 @@ static uint16_t current_service = 0;
 static task_descriptor_t* periodic_tasks[MAXPROCESS]; 
 static uint16_t current_pt = 0; 
 
-static char trace[256]; 
+static char trace[512]; 
 static uint16_t trace_counter = 0; 
 
 extern int r_main(); 
@@ -180,7 +181,6 @@ static void kernel_dispatch(void)
                         OS_Abort();
                     }
                     t = periodic_tasks[i];
-                    break;
                 }
             }
             if(t != NULL) {                
@@ -202,7 +202,6 @@ static void kernel_dispatch(void)
         }
 
         cur_task->state = RUNNING;
-        
         trace_add_point(cur_task->arg);  
     }
 }
@@ -310,7 +309,7 @@ static void kernel_handle_request(void)
 
     case TASK_INTERRUPT:
         if(cur_task->level != SYSTEM) {
-            cur_task->state = READY;
+            //cur_task->state = READY;
             ticks_remaining = 0; 
         }
         break; 
@@ -1080,6 +1079,7 @@ SERVICE *Service_Init(){
     }
 
     services[current_service].value = 0;
+    services[current_service].length = 0;
     services[current_service].tasks.head = NULL;
     services[current_service].tasks.tail = NULL;
 
@@ -1099,13 +1099,17 @@ void Service_Publish( SERVICE *s, int16_t v ) {
     }
 
     // Make sure the service isn't empty
-    if(s->tasks.head != NULL) {
+    if(s->length != 0) {
         task = dequeue(&(s->tasks));
+        
     } else {
         error_msg = ERR_RUN_9_SERVICE_ILLEGAL_OPERATION;
         OS_Abort();
     }
-
+    if(task == NULL){
+            error_msg = ERR_1_PPP_NAME_OUT_OF_RANGE;
+            OS_Abort();
+    }
     // Wake up all tasks blocked on the service
     while(task != NULL) {
         if(task->state == WAITING) {
@@ -1130,6 +1134,8 @@ void Service_Publish( SERVICE *s, int16_t v ) {
         task = dequeue(&(s->tasks));
     }
 
+    s->length = 0; 
+
     if(interrupt){
         kernel_task_interrupt(); 
     }
@@ -1144,22 +1150,10 @@ void Service_Subscribe( SERVICE *s, int16_t *v ) {
         OS_Abort();
     }
 
-    if(s->tasks.head == NULL) {
-        // Add to head of queue
-        cur_task->state = WAITING;
-        cur_task->value = v;
-        cur_task->next = NULL;
-        s->tasks.head = cur_task;
-        s->tasks.tail = cur_task;
-    } else {
-        // Add to queue normally
-        cur_task->state = WAITING;
-        cur_task->value = v;
-        cur_task->next = NULL;        
-        s->tasks.tail->next = cur_task;
-        s->tasks.tail = cur_task;
-    }
-
+    cur_task->state = WAITING;
+    cur_task->value = v;
+    enqueue(&(s->tasks), cur_task); 
+    s->length++; 
     Task_Next();
 }
 
@@ -1285,7 +1279,7 @@ void set_output(uint8_t val){
 }
 
 static void trace_add_point(uint8_t n){
-    if(trace_counter <= 255){
+    if(trace_counter <= 511){
         trace[trace_counter++] = (char)(n+48); 
     }
 }
