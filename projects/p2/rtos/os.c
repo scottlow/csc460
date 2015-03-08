@@ -166,16 +166,19 @@ static void kernel_dispatch(void)
 
     if(cur_task->state != RUNNING || cur_task == idle_task)
     {
+        // If there is a system task to run, it should take prioroty
 		if(system_queue.head != NULL)
         {
             cur_task = dequeue(&system_queue);
         }
         else 
         {
+            // Let's check to see if there is a periodic task that is ready to run (time_remaining == 0)
             int i;
             task_descriptor_t *t = NULL;
             for(i = 0; i < current_pt; i++) {
                 if(periodic_tasks[i]->time_remaining <= 0) {
+                    // If there is more than one periodic task ready during a tick, we should throw a runtime error
                     if(t != NULL) {
                         error_msg = ERR_RUN_10_PERIODIC_TASK_CONFLICT;
                         OS_Abort();
@@ -183,6 +186,8 @@ static void kernel_dispatch(void)
                     t = periodic_tasks[i];
                 }
             }
+            // If we found a periodic task to run, let's set its time_remaining value for rescheduling and also set
+            // ticks_remaining to its worst case execution time (this is the maximum amount of time it is allowed)
             if(t != NULL) {                
                 cur_task = t;
                 cur_task->time_remaining += cur_task->period;
@@ -192,6 +197,7 @@ static void kernel_dispatch(void)
             } 
             else if(rr_queue.head != NULL)
             {
+                // If there are no periodic tasks, we should check to see if there are any RR tasks
                 cur_task = dequeue(&rr_queue);
             }
             else
@@ -201,7 +207,10 @@ static void kernel_dispatch(void)
             }
         }
 
+        // Set the selected task's state to running
         cur_task->state = RUNNING;
+        
+        // Add the argument of the selected task to the trace for debugging
         trace_add_point(cur_task->arg);  
     }
 }
@@ -280,6 +289,7 @@ static void kernel_handle_request(void)
         break;
 
     case TASK_NEXT:
+        // We should only change tasks if the current task's state is RUNNING
         if(cur_task->state == RUNNING) {
     		switch(cur_task->level)
     		{
@@ -288,6 +298,7 @@ static void kernel_handle_request(void)
     			break;
 
     	    case PERIODIC:
+                // Setting ticks_remaining = 0 effectively means that this task is out of time and needs to be rescheduled
     	        ticks_remaining = 0;
     	        break;
 
@@ -308,6 +319,7 @@ static void kernel_handle_request(void)
         break;
 
     case TASK_INTERRUPT:
+        // This is necessary for system task preemption when a service is published to
         if(cur_task->level != SYSTEM) {
             //cur_task->state = READY;
             ticks_remaining = 0; 
