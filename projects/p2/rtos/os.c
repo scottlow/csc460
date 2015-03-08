@@ -23,7 +23,7 @@
 
 /*Variables for Project 2*/
 
-typedef struct service{
+struct service{
   uint16_t value; 
   queue_t tasks; 
 };
@@ -39,14 +39,6 @@ static uint16_t current_pt = 0;
 
 static char trace[256]; 
 static uint16_t trace_counter = 0; 
-
-
-/** PPP and PT defined in user application. */
-//extern const unsigned char PPP[2] = {1, 255};
-extern const unsigned char PPP[];
-
-/** PPP and PT defined in user application. */
-extern const unsigned int PT;
 
 extern int r_main(); 
 
@@ -83,17 +75,8 @@ static queue_t system_queue;
 /** time remaining in current slot */
 static volatile uint8_t ticks_remaining = 0;
 
-/** Indicates if periodic task in this slot has already run this time */
-static uint8_t slot_task_finished = 0;
-
-/** Index of name of task in current slot in PPP array. An even number from 0 to 2*(PT-1). */
-static unsigned int slot_name_index = 0;
-
 /** The task descriptor for index "name of task" */
 static task_descriptor_t* name_to_task_ptr[MAXNAME + 1];
-
-/** The names that appear in PPP */
-static uint8_t name_in_PPP[MAXNAME + 1];
 
 /** Error message used in OS_Abort() */
 static uint8_t volatile error_msg = ERR_RUN_1_USER_CALLED_OS_ABORT;
@@ -118,7 +101,6 @@ static void enqueue(queue_t* queue_ptr, task_descriptor_t* task_to_add);
 static task_descriptor_t* dequeue(queue_t* queue_ptr);
 
 static void kernel_update_ticker(void);
-static void check_PPP_names(void);
 static void idle (void);
 static void _delay_25ms(void);
 
@@ -278,8 +260,7 @@ static void kernel_handle_request(void)
 
             /* If cur is RR, it might be pre-empted by a new PERIODIC. */
             if(cur_task->level == RR &&
-               kernel_request_create_args.level == PERIODIC &&
-               PPP[slot_name_index] == kernel_request_create_args.name)
+               kernel_request_create_args.level == PERIODIC)
             {
                 cur_task->state = READY;
             }
@@ -836,32 +817,6 @@ static void kernel_update_ticker(void)
     }
 }
 
-
-/**
- * @brief Validate the PPP array.
- */
-static void check_PPP_names(void)
-{
-    uint8_t i;
-    uint8_t name;
-
-    for(i = 0; i < 2 * PT; i += 2)
-    {
-        name = PPP[i];
-
-        /* name == IDLE or 0 < name <= MAXNAME */
-        if(name <= MAXNAME)
-        {
-            name_in_PPP[name] = 1;
-        }
-        else
-        {
-            error_msg = ERR_1_PPP_NAME_OUT_OF_RANGE;
-            OS_Abort();
-        }
-    }
-}
-
 #undef SLOW_CLOCK
 
 #ifdef SLOW_CLOCK
@@ -927,12 +882,6 @@ void OS_Init()
     cur_task = task_desc;
     cur_task->state = RUNNING;
     dequeue(&system_queue);
-
-    /* Initilize time slot */
-    if(PT > 0)
-    {
-        ticks_remaining = PPP[1];
-    }
 
     /* Set up Timer 1 Output Compare interrupt,the TICK clock. */
     TIMSK1 |= _BV(OCIE1A);
@@ -1139,7 +1088,7 @@ SERVICE *Service_Init(){
 }
 
 void Service_Publish( SERVICE *s, int16_t v ) {
-    task_descriptor_t *task;
+    task_descriptor_t *task = NULL;
 
     int interrupt = 0; 
 
@@ -1150,7 +1099,7 @@ void Service_Publish( SERVICE *s, int16_t v ) {
     }
 
     // Make sure the service isn't empty
-    if(s->head != NULL) {
+    if(s->tasks.head != NULL) {
         task = dequeue(&(s->tasks));
     } else {
         error_msg = ERR_RUN_9_SERVICE_ILLEGAL_OPERATION;
